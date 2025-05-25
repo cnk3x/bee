@@ -32,13 +32,13 @@ func New(ctx context.Context, size int) *Pool {
 
 // Pool 定义了一个线程池结构体，用于管理工作线程。
 type Pool struct {
-	ctx       context.Context
-	work      chan struct{}
-	done      chan struct{}
-	closeDone context.CancelFunc
-	running   atomic.Int32
-	worked    atomic.Int64
-	index     atomic.Int64
+	ctx       context.Context    // 上下文，用于控制工作线程的生命周期
+	work      chan struct{}      // 用于限制并发任务数的通道
+	done      chan struct{}      // 用于通知所有任务完成的通道
+	closeDone context.CancelFunc // 用于关闭done通道的函数
+	running   atomic.Int32       // 当前正在运行的任务数量
+	worked    atomic.Int64       // 已完成的任务数量
+	index     atomic.Int64       // 任务的索引计数器
 }
 
 // Run 执行一个任务，无需上下文和索引。
@@ -96,6 +96,11 @@ func (p *Pool) RunWithContextAndIndex(f func(ctx context.Context, index int64)) 
 		}()
 		return true
 	}
+}
+
+// Exit 启动线程池的退出过程。
+func (p *Pool) Exit() {
+	p.closeDone()
 }
 
 // Worked 返回已完成任务的数量。
